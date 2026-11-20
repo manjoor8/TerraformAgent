@@ -1,0 +1,25 @@
+# Local state, secrets and build output
+.env
+.env.*
+!.env.example
+backend/.env
+backend/data/
+backend/.venv/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.mypy_cache/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+*.log
+*.tsbuildinfo
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfplan
+tools/
+docs/screenshots/*.tmp
+.DS_Store
+Thumbs.db
+*.zip

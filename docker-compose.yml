@@ -1,0 +1,70 @@
+name: terraformagent
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: terraformagent
+      POSTGRES_USER: terraformagent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terraformagent -d terraformagent"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks: [backend]
+
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:-amd64}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in your environment}
+      DATABASE_URL: postgresql+psycopg://terraformagent:${POSTGRES_PASSWORD:-change-me-in-production}@postgres:5432/terraformagent
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:-admin@terraformagent.local}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?set BOOTSTRAP_PASSWORD}
+      BOOTSTRAP_ORG: ${BOOTSTRAP_ORG:-TerraformAgent}
+      PLATFORM_ADMIN_EMAILS: ${PLATFORM_ADMIN_EMAILS:-}
+      LIVE_PRICING: ${LIVE_PRICING:-true}
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-gpt-4o}
+      # Terraform worker credentials. Prefer a managed identity / OIDC in Azure.
+      ARM_CLIENT_ID: ${ARM_CLIENT_ID:-}
+      ARM_CLIENT_SECRET: ${ARM_CLIENT_SECRET:-}
+      ARM_TENANT_ID: ${ARM_TENANT_ID:-}
+      ARM_SUBSCRIPTION_ID: ${ARM_SUBSCRIPTION_ID:-}
+      ARM_USE_OIDC: ${ARM_USE_OIDC:-false}
+      ARM_USE_MSI: ${ARM_USE_MSI:-false}
+    ports:
+      - "8010:8000"
+    volumes:
+      - terraformagent-data:/app/backend/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks: [backend]
+
+volumes:
+  postgres-data:
+  terraformagent-data:
+
+networks:
+  backend:
+    driver: bridge

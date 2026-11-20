@@ -1,0 +1,16 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+backend/.venv
+backend/data
+backend/.pytest_cache
+frontend/node_modules
+frontend/dist
+docs/screenshots
+tools
+.env
+.env.*
+!.env.example
+*.tfstate
+*.tfplan

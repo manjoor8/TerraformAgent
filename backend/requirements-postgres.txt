@@ -1,0 +1,2 @@
+# PostgreSQL driver for production deployments.
+psycopg[binary]>=3.2,<4.0
